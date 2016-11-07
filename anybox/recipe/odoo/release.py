@@ -50,7 +50,7 @@ class ReleaseRecipe(ServerRecipe):
         self.merge_requirements()
         self.install_requirements()
         self.extract_downloads_to(self.release_dir)
-        return self.openerp_installed
+        return self.odoo_installed
 
     update = install
 

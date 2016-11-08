@@ -1431,6 +1431,7 @@ class BaseRecipe(object):
             if local_path is main_software:
                 rel_path = self._extract_main_software(source_type, target_dir,
                                                        extracted)
+		rel_path = self.to_src_path(rel_path)
                 out_conf.set(self.name, 'version', 'local ' + rel_path)
                 continue
 
@@ -1447,6 +1448,7 @@ class BaseRecipe(object):
                         "does not have it as its parent" % (group, local_path))
             else:
                 target_local_path = local_path
+	    target_local_path = self.to_src_path(target_local_path)
 
             addons_line = ['local', target_local_path]
             addons_line.extend('%s=%s' % (opt, val)
@@ -1540,6 +1542,7 @@ class BaseRecipe(object):
         """
         conf.add_section('buildout')
         conf.set('buildout', 'extends', self.buildout_cfg_name())
+	conf.set('buildout', 'odoo-src-dir', '${buildout:directory}')
         conf.add_section('versions')
         conf.set('buildout', 'versions', 'versions')
 
@@ -1553,10 +1556,14 @@ class BaseRecipe(object):
                                      target_dir, target_sub_dir, extracted)
             # looks silly, but better for uniformity:
             develops.add(target_sub_dir)
+	    if target_sub_dir in develops:
+                develops.remove(target_sub_dir)
+            develops.add(abs_path)
 
         bdir = os.path.join(self.buildout_dir, '')
         conf.set('buildout', 'develop',
-                 os.linesep.join(d[len(bdir):] if d.startswith(bdir) else d
+                 os.linesep.join(self.to_src_path(d[len(bdir):]) if
+                                 d.startswith(bdir) else d
                                  for d in develops))
 
         # remove gp.vcsdevelop from extensions
@@ -1702,3 +1709,8 @@ class BaseRecipe(object):
                 return a[len(prefix):]
 
         return 'buildout.cfg'
+
+    @classmethod
+    def to_src_path(cls, base_path):
+        return os.path.join('${buildout:odoo-src-dir}',
+                             base_path) 
